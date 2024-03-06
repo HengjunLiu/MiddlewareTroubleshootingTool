@@ -1,20 +1,14 @@
-# import xmlrpc.client
+import matplotlib.pyplot as plt
 
-# server_url = 'http://192.168.3.115:18888'
-# try:
-#     # 连接到XML-RPC服务器
-#     # server_url = "http://localhost:18888"
-#     proxy = xmlrpc.client.ServerProxy(server_url)
-#     # 调用方法并获取结果
-#     result = proxy.is_ip_reachable('192.168.1.1')
-# except Exception as e:
-#     print(e)
-# else:
-#     print(result)
+input_values = [1,2,3,4,5]
+square=[1,4,9,16,25]
 
-import os
+fig,ax = plt.subplots()
+ax.plot(input_values, square,linewidth = 3)
 
-list1=[1,2,3,4,5]
-list2=[6,7,8,9,10]
+ax.set_title("Square Numbers", fontsize = 24)
+ax.set_xlabel("value", fontsize = 24)
+ax.set_ylabel("Square of Value", fontsize = 24)
 
-print(list1 + list2)
+ax.tick_params(labelsize = 14)
+plt.show()
