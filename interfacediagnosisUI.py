@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication
 from networkdiagnosis import networkdiagnosis
 
+
 class interfacediagnosisUI(object):
     def __init__(self, networkdiagnosis):
         self.networkdiagnosis = networkdiagnosis
@@ -42,13 +43,11 @@ class interfacediagnosisUI(object):
 
         self.networkdiagnosis.interfacediagnosisstart(self, Dialog)
 
-
-
-    #动态添加控件
+    # 动态添加控件
     def addwidget(self):
         for module in self.networkdiagnosis.modulelist:
             modulename = module.name
-            #添加上面控件
+            # 添加上面控件
             if modulename.upper().find('DMS') + modulename.upper().find('ADM') + modulename.upper().find('CENTRALINK') \
                     + modulename.upper().find('DATALINK') + modulename.upper().find('LIS') == -5:
                 widgetname = 'pbInstruments'
@@ -71,13 +70,13 @@ class interfacediagnosisUI(object):
                 widget.setText(self._translate("Dialog", instrumentname))
                 setattr(self, widgetname, widget)
 
-            #添加左边控件
+            # 添加左边控件
             leftlist = self.networkdiagnosis.moduledict[modulename].interfaceleft
             if leftlist[0]:
                 for leftitem in leftlist:
                     interfacename = leftitem.split(':')[0].strip()
-                    self.addbutton(instrumentname,interfacename,'left')
-            else:
+                    self.addbutton(instrumentname, interfacename, 'left')
+            elif instrumentname == 'Instruments':
                 self.addbutton('Instruments', 'invisible', 'left')
 
             # 添加右边控件
@@ -86,7 +85,7 @@ class interfacediagnosisUI(object):
                 for rightitem in rightlist:
                     interfacename = rightitem.split(':')[0].strip()
                     self.addbutton(instrumentname, interfacename, 'right')
-            else:
+            elif instrumentname == 'LIS':
                 self.addbutton('LIS', 'invisible', 'right')
 
     def addbutton(self, modulename, interfacename, leftorright, ):
@@ -98,7 +97,7 @@ class interfacediagnosisUI(object):
             vl.setObjectName(modulename + leftorright)
             setattr(self, 'vl' + modulename + leftorright, vl)
         else:
-            if getattr(self,'pb' + modulename + interfacename, None):
+            if getattr(self, 'pb' + modulename + interfacename, None):
                 return
 
         widget = QtWidgets.QPushButton(self.horizontalLayoutWidget)
@@ -134,8 +133,6 @@ class CustominterfaceDialog(QtWidgets.QDialog):
         # 阻止对话框被关闭，但隐藏它
         event.ignore()
         self.hide()
-
-
 
 
 if __name__ == "__main__":

@@ -5,7 +5,8 @@ from PyQt5.QtWidgets import QApplication
 
 from TroubleshootingToolUI import base_dialog
 from networkdiagnosis import networkdiagnosis
-from interfacediagnosisUI import interfacediagnosisUI,CustominterfaceDialog
+from interfacediagnosisUI import interfacediagnosisUI, CustominterfaceDialog
+
 
 class main(base_dialog):
     def __init__(self):
@@ -20,13 +21,13 @@ class main(base_dialog):
 
         self.pbPortDiagnose.clicked.connect(self.openinterfacediagnosisUI)
         # modulelist = ["ChemstryXPT-1", "CentaurXPT-1", "Atellica", "TerminalServer", "immunite2000", "Aptio", "DMS", "ADM", "DataLink", "LIS"]
-        #根据配置文件中的设备列表，实时添加对应控件
+        # 根据配置文件中的设备列表，实时添加对应控件
         self.addwidget(self.networkdiag.modulenamelist)
         # 添加系统托盘图标
         self.systemTrayIcon = SystemTrayIcon(dialog)
         self.systemTrayIcon.show()
 
-    #打开通讯接口监控界面
+    # 打开通讯接口监控界面
     def openinterfacediagnosisUI(self):
         if not self.ui:
             self.dialogII = CustominterfaceDialog()
@@ -36,9 +37,7 @@ class main(base_dialog):
         else:
             self.dialogII.show()
 
-
-
-    #动态添加控件
+    # 动态添加控件
     def addwidget(self, modulenamelist):
         for modulename in modulenamelist:
             widgetname = 'pb' + modulename
@@ -52,7 +51,7 @@ class main(base_dialog):
             font.setPointSize(12)
             widget.setFont(font)
             widget.setObjectName(widgetname)
-            if modulename.upper().find('DMS') + modulename.upper().find('ADM') + modulename.upper().find('CENTRALINK')\
+            if modulename.upper().find('DMS') + modulename.upper().find('ADM') + modulename.upper().find('CENTRALINK') \
                     + modulename.upper().find('DATALINK') + modulename.upper().find('LIS') == -5:
                 self.verticalLayout.addWidget(widget)
             else:
@@ -64,6 +63,7 @@ class main(base_dialog):
             # 触发点击事件
             widget.clicked.connect(getattr(self.networkdiag.moduledict[modulename], 'checknetworkconnectionSOP'))
             # print('addwidget', modulename)
+
 
 # 这是一个托盘类，后期还需要进行功能拓展
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
@@ -85,6 +85,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def close(self):
         QtWidgets.QApplication.quit()
 
+
 # 创建一个QDialog子类
 class CustomDialog(QtWidgets.QDialog):
     def closeEvent(self, event):
@@ -96,7 +97,6 @@ class CustomDialog(QtWidgets.QDialog):
             event.accept()  # 接受关闭事件
         else:
             event.ignore()  # 忽略关闭事件
-
 
 
 if __name__ == "__main__":

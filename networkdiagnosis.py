@@ -131,6 +131,9 @@ class module:
         return interfacestatus
 
 
+
+
+
 class networkdiagnosis:
     def __init__(self):
         self.dialog = None
