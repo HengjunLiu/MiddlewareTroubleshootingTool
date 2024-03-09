@@ -48,8 +48,7 @@ class interfacediagnosisUI(object):
         for module in self.networkdiagnosis.modulelist:
             modulename = module.name
             # 添加上面控件
-            if modulename.upper().find('DMS') + modulename.upper().find('ADM') + modulename.upper().find('CENTRALINK') \
-                    + modulename.upper().find('DATALINK') + modulename.upper().find('LIS') == -5:
+            if modulename.upper() not in ['ATM', 'DMS', 'ADM', 'CENTRALINK', 'DATALINK', 'LIS']:
                 widgetname = 'pbInstruments'
                 instrumentname = 'Instruments'
             else:

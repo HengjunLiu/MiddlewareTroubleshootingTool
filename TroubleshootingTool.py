@@ -51,8 +51,8 @@ class main(base_dialog):
             font.setPointSize(12)
             widget.setFont(font)
             widget.setObjectName(widgetname)
-            if modulename.upper().find('DMS') + modulename.upper().find('ADM') + modulename.upper().find('CENTRALINK') \
-                    + modulename.upper().find('DATALINK') + modulename.upper().find('LIS') == -5:
+
+            if modulename.upper() not in ['ATM', 'DMS', 'ADM', 'CENTRALINK', 'DATALINK', 'LIS']:
                 self.verticalLayout.addWidget(widget)
             else:
                 font.setPointSize(16)
