@@ -1,3 +1,4 @@
+import codecs
 import configparser
 import subprocess
 import threading
@@ -106,13 +107,12 @@ class module:
         interfacelist = self.interfaceleft + self.interfaceright
         if self.name.upper() == 'DMS':
             netstatinfo = self.get_linux_netstat_info(self.ip)
-        elif self.name.upper() in ['ADM','CENTRALINK','DATALINK']:
+        elif self.name.upper() in ['ATM','ADM','CENTRALINK','DATALINK']:
             netstatinfo = self.getnetstatinfo()
         else:   #Instrument和LIS电脑无法直接检测端口状态，暂时不做处理
             netstatinfo = 'nothing'
         if netstatinfo:
-            if self.name.upper().find('DMS') + self.name.upper().find('ADM') + self.name.upper().find('CENTRALINK') \
-                    + self.name.upper().find('DATALINK') + self.name.upper().find('LIS') == -5:
+            if self.name.upper() not in ['ATM', 'DMS', 'ADM', 'CENTRALINK', 'DATALINK', 'LIS']:
                 modulename = 'Instruments'
             else:
                 modulename = self.name
@@ -143,8 +143,12 @@ class networkdiagnosis:
         self.interfaceUI = None
         self.allinterfacestatus ={}
         # 读取配置文件的模块信息
+        # 使用 codecs 打开文件，并指定编码  
+        with codecs.open("Configuration.ini", 'r', 'utf-8-sig') as file:  
+            # codecs 的 'utf-8-sig' 会自动处理 BOM  
+            content = file.read()
         self.config = configparser.ConfigParser()
-        self.config.read("Configuration.ini", 'utf-8')
+        self.config.read_string(content)
         self.modulenamelist = self.config.get("ModuleNames", "NameList").split(',')
         # 清除设备名称前后可能存在的空格字符，并返回有效模块名称列表（供UI动态生成模块控件调用）
         self.modulenamelist = [name.strip() for name in self.modulenamelist]
@@ -244,13 +248,15 @@ class networkdiagnosis:
             if key.startswith('Instruments'):
                 name = key[11:]
                 partnername = self.getpartnername(name, 'Instruments')
-                if interfacedict[partnername] == 'ESTABLISHED':
-                    interfacedict[key] = 'ESTABLISHED'
+                if partnername:
+                    if interfacedict[partnername] == 'ESTABLISHED':
+                        interfacedict[key] = 'ESTABLISHED'
             elif key.startswith('LIS'):
                 name = key[3:]
                 partnername = self.getpartnername(name, 'LIS')
-                if interfacedict[partnername] == 'ESTABLISHED':
-                    interfacedict[key] = 'ESTABLISHED'
+                if partnername:
+                    if interfacedict[partnername] == 'ESTABLISHED':
+                        interfacedict[key] = 'ESTABLISHED'
         ####################################################
         for interfacename,status in interfacedict.items():
             if self.allinterfacestatus.get(interfacename) != status:
@@ -262,13 +268,13 @@ class networkdiagnosis:
         ipandport = ''
         if modulename == 'Instruments':
             for module in self.modulelist:
-                if module.name.upper() not in ['DMS','ADM','CENTRALINK','DATALINK','LIS']:
+                if module.name.upper() not in ['ATM','DMS','ADM','CENTRALINK','DATALINK','LIS']:
                     for interface in module.interfaceright:
                         if interface.find(name) > -1:
                             ipandport = interface.split(':', 1)[1].strip()
                             break
             for module in self.modulelist:
-                if module.name.upper() in ['DMS', 'ADM', 'CENTRALINK', 'DATALINK']:
+                if module.name.upper() in ['ATM','DMS', 'ADM', 'CENTRALINK', 'DATALINK']:
                     for interface in module.interfaceleft:
                         if ipandport == interface.split(':', 1)[1].strip():
                             return module.name + interface.split(':', 1)[0].strip()
@@ -280,10 +286,11 @@ class networkdiagnosis:
                             ipandport = interface.split(':', 1)[1].strip()
                             break
             for module in self.modulelist:
-                if module.name.upper() in ['DMS', 'ADM', 'CENTRALINK', 'DATALINK']:
+                if module.name.upper() in ['ATM','DMS', 'ADM', 'CENTRALINK', 'DATALINK']:
                     for interface in module.interfaceright:
                         if ipandport == interface.split(':', 1)[1].strip():
                             return module.name + interface.split(':', 1)[0].strip()
+        return ''
 
 
     def detectinterfaceforever(self):
@@ -293,7 +300,7 @@ class networkdiagnosis:
                 self.detectinterfaceall()
                 time.sleep(5)
             except:
-                print('detectinterfaceforever！函数报错了！')
+                print('detectinterfaceforever 函数报错了！')
 
     def interfacediagnosisstart(self, interfaceUI, dialogII):
         self.dialogII = dialogII
