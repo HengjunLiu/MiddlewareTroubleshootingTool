@@ -5,6 +5,7 @@ import threading
 import asyncio
 import time,datetime
 import xmlrpc.client
+import logging
 
 import paramiko
 from PyQt5.QtGui import QFont
@@ -37,9 +38,11 @@ class module:
         # 在返回值中找规律(中英文系统返回值不一样)
         if 'ms TTL=' in output:
             # print(f"{self.ip} is reachable",str(datetime.datetime.now().time()))
+            logging.debug(f'{self.ip} is reachable')
             return True
         else:
             # print(f"{self.ip} is unreachable",str(datetime.datetime.now().time()))
+            logging.debug(f"{self.ip} is unreachable")
             return False
 
 
@@ -66,7 +69,8 @@ class module:
             # 调用方法并获取结果
             result = proxy.get_netstat_info()
         except Exception as e:
-            print(e)
+            # print(e)
+            logging.warning(f"getnetstatinfo()执行异常" + str(e))
             result = ''
         return result
 
@@ -80,27 +84,35 @@ class module:
             result = proxy.is_ip_reachable(ipaddress)
             # 在返回值中找规律(中英文系统返回值不一样)
             if 'ms TTL=' in result:
-                print(f"{ipaddress} is reachable",str(datetime.datetime.now().time()))
+                # print(f"{ipaddress} is reachable",str(datetime.datetime.now().time()))
+                logging.debug(f"{ipaddress} is reachable")
                 return True
             else:
-                print(f"{ipaddress} is unreachable",str(datetime.datetime.now().time()))
+                # print(f"{ipaddress} is unreachable",str(datetime.datetime.now().time()))
+                logging.debug(f"{ipaddress} is unreachable")
                 return False
         except Exception as e:
-            print(e)
+            # print(e)
+            logging.warning("isipreachable()执行异常" + str(e))
             return False
 
 
     def get_linux_netstat_info(self, ip):
-        # 创建SSH客户端
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # 自动添加主机名和主机密钥到本地HostKeys对象，并保存
-        client.connect(ip, username='root', password='inpeco!it')
-        # 执行netstat命令并获取输出
-        stdin, stdout, stderr = client.exec_command("netstat -an | grep tcp")
-        netstat_info = stdout.read().decode()
-        # 关闭连接
-        client.close()
-        return netstat_info
+        try:
+            # 创建SSH客户端
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # 自动添加主机名和主机密钥到本地HostKeys对象，并保存
+            client.connect(ip, username='root', password='inpeco!it')
+            # 执行netstat命令并获取输出
+            stdin, stdout, stderr = client.exec_command("netstat -an | grep tcp")
+            netstat_info = stdout.read().decode()
+            # 关闭连接
+            client.close()
+            return netstat_info
+        except:
+            logging.warning("get_linux_netstat_info()函数执行异常")
+            return ''
+        
 
     def checkinterfacestatus(self):
         interfacestatus = {}
@@ -129,8 +141,6 @@ class module:
                     else:
                         interfacestatus[modulename + interfacename.strip()] = 'DISCONNECTED'
         return interfacestatus
-
-
 
 
 
@@ -173,13 +183,11 @@ class networkdiagnosis:
                 moduleobject.interfaceleft = [lists.strip() for lists in moduleobject.interfaceleft]
                 moduleobject.interfaceright = self.config.get(name, 'interfaces_right').split(',')
                 moduleobject.interfaceright = [lists.strip() for lists in moduleobject.interfaceright]
-                # print(moduleobject.interfaceright)
 
                 self.modulelist.append(moduleobject)
                 self.moduledict[name] = moduleobject
-                # print('addmodule',moduleobject.ip, datetime.datetime.now().time())
         except:
-            print('networkdiagnosis.addmodule 执行报错')
+            logging.critical(f"addmodule()-->{name}模块添加异常")
 
 
 
@@ -222,15 +230,20 @@ class networkdiagnosis:
                 asyncio.run(self.detectnetworkall())
                 time.sleep(3)
             except:
-                print('detectallnetworkforever函数报错了！')
+                # print('detectallnetworkforever函数报错了！')
+                logging.error('detectallnetworkforever函数报错了！')
+
 
     # 循环检测各设备网络连接状况
     def networkdiagnosisstart(self, mainUI, maindialog):
-        self.dialog = maindialog
-        self.main_UI = mainUI
-        self.detectnetworkthread = threading.Thread(target=self.detectallnetworkforever)
-        self.detectnetworkthread.daemon = True
-        self.detectnetworkthread.start()
+        try:
+            self.dialog = maindialog
+            self.main_UI = mainUI
+            self.detectnetworkthread = threading.Thread(target=self.detectallnetworkforever)
+            self.detectnetworkthread.daemon = True
+            self.detectnetworkthread.start()
+        except:
+            logging.error("networkdiagnosisstart()运行异常，退出线程")
     #--------------------------------------------------------------------------------
 
     def detectinterfaceall(self):
@@ -300,7 +313,8 @@ class networkdiagnosis:
                 self.detectinterfaceall()
                 time.sleep(5)
             except:
-                print('detectinterfaceforever 函数报错了！')
+                # print('detectinterfaceforever 函数报错了！')
+                logging.error('detectinterfaceforever 函数报错了！')
 
     def interfacediagnosisstart(self, interfaceUI, dialogII):
         self.dialogII = dialogII
@@ -310,7 +324,8 @@ class networkdiagnosis:
             self.detectinterfacethread.daemon = True
             self.detectinterfacethread.start()
         except:
-            print('退出线程！')
+            # print('退出线程！')
+            logging.error("interfacediagnosisstart()运行异常，退出线程")
 
 
 
