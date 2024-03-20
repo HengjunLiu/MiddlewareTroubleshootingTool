@@ -41,7 +41,7 @@ class main(base_dialog):
             self.ui.setupUi(self.dialogII)
             self.dialogII.show()
         else:
-            self.dialogII.show()
+            self.dialogII.showNormal()
 
     # 动态添加控件
     def addwidget(self, modulenamelist):

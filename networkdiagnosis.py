@@ -113,16 +113,20 @@ class module:
             logging.warning("get_linux_netstat_info()函数执行异常")
             return ''
         
-
-    def checkinterfacestatus(self):
+    #检查设备中各端口连接状态
+    def checkinterfacestatus(self, networkconnected = True):
         interfacestatus = {}
         interfacelist = self.interfaceleft + self.interfaceright
-        if self.name.upper() == 'DMS':
-            netstatinfo = self.get_linux_netstat_info(self.ip)
-        elif self.name.upper() in ['ATM','ADM','CENTRALINK','DATALINK']:
-            netstatinfo = self.getnetstatinfo()
-        else:   #Instrument和LIS电脑无法直接检测端口状态，暂时不做处理
+        if networkconnected:
+            if self.name.upper() == 'DMS':
+                netstatinfo = self.get_linux_netstat_info(self.ip)
+            elif self.name.upper() in ['ATM','ADM','CENTRALINK','DATALINK']:
+                netstatinfo = self.getnetstatinfo()
+            else:   #Instrument和LIS电脑无法直接检测端口状态，暂时不做处理
+                netstatinfo = 'nothing'
+        else:
             netstatinfo = 'nothing'
+
         if netstatinfo:
             if self.name.upper() not in ['ATM', 'DMS', 'ADM', 'CENTRALINK', 'DATALINK', 'LIS']:
                 modulename = 'Instruments'
@@ -249,11 +253,7 @@ class networkdiagnosis:
     def detectinterfaceall(self):
         """监测每个模块通讯接口连接情况，"""
         interfacedict = {}
-        list = []
-        # list = [module.checkinterfacestatus() for module in self.modulelist if module.networkconnected ]
-        for module in self.modulelist:
-            if module.networkconnected:
-                list.append(module.checkinterfacestatus())
+        list = [module.checkinterfacestatus(module.networkconnected) for module in self.modulelist]  
         for statusdict in list:
             interfacedict.update(statusdict)
         #下面这一段代码是间接更新Instruments和LIS模块的接口状态
