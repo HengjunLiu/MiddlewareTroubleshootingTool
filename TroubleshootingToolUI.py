@@ -43,17 +43,18 @@ class base_dialog(object):
         self.pbLogAnalysis.setFont(font)
         self.pbLogAnalysis.setObjectName("pbLogAnalysis")
         self.horizontalLayout.addWidget(self.pbLogAnalysis)
-        self.pbCommunicationTool = QtWidgets.QPushButton(self.horizontalLayoutWidget)
+        
+        self.pbAuxiliaryTool = QtWidgets.QPushButton(self.horizontalLayoutWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.pbCommunicationTool.sizePolicy().hasHeightForWidth())
-        self.pbCommunicationTool.setSizePolicy(sizePolicy)
+        sizePolicy.setHeightForWidth(self.pbAuxiliaryTool.sizePolicy().hasHeightForWidth())
+        self.pbAuxiliaryTool.setSizePolicy(sizePolicy)
         font = QtGui.QFont()
         font.setPointSize(16)
-        self.pbCommunicationTool.setFont(font)
-        self.pbCommunicationTool.setObjectName("pbCommunicationTool")
-        self.horizontalLayout.addWidget(self.pbCommunicationTool)
+        self.pbAuxiliaryTool.setFont(font)
+        self.pbAuxiliaryTool.setObjectName("pbAuxiliaryTool")
+        self.horizontalLayout.addWidget(self.pbAuxiliaryTool)
         self.horizontalLayoutWidget_2 = QtWidgets.QWidget(dialog)
         self.horizontalLayoutWidget_2.setGeometry(QtCore.QRect(20, 130, 1091, 471))
         self.horizontalLayoutWidget_2.setObjectName("horizontalLayoutWidget_2")
@@ -72,7 +73,7 @@ class base_dialog(object):
         dialog.setWindowTitle(_translate("dialog", "通讯诊断工具"))
         self.pbPortDiagnose.setText(_translate("dialog", "通讯端口诊断"))
         self.pbLogAnalysis.setText(_translate("dialog", "通讯日志分析"))
-        self.pbCommunicationTool.setText(_translate("dialog", "通讯工具"))
+        self.pbAuxiliaryTool.setText(_translate("dialog", "辅助工具"))
 
 
 

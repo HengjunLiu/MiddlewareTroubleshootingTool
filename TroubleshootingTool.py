@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QApplication
 from TroubleshootingToolUI import base_dialog
 from networkdiagnosis import networkdiagnosis
 from interfacediagnosisUI import interfacediagnosisUI, CustominterfaceDialog
+import Tools
 
 logging.basicConfig(level=logging.DEBUG,  
                     format='%(asctime)s - %(levelname)s - %(message)s',  
@@ -26,6 +27,7 @@ class main(base_dialog):
         self.networkdiag.networkdiagnosisstart(self, dialog)
 
         self.pbPortDiagnose.clicked.connect(self.openinterfacediagnosisUI)
+        self.pbAuxiliaryTool.clicked.connect(self.openAuxiliaryTool)
         # modulelist = ["ChemstryXPT-1", "CentaurXPT-1", "Atellica", "TerminalServer", "immunite2000", "Aptio", "DMS", "ADM", "DataLink", "LIS"]
         # 根据配置文件中的设备列表，实时添加对应控件
         self.addwidget(self.networkdiag.modulenamelist)
@@ -42,6 +44,11 @@ class main(base_dialog):
             self.dialogII.show()
         else:
             self.dialogII.showNormal()
+            
+    def openAuxiliaryTool(self):
+        self.dialogIII = Tools.ToolsUI()
+        self.dialogIII.show()
+        
 
     # 动态添加控件
     def addwidget(self, modulenamelist):
