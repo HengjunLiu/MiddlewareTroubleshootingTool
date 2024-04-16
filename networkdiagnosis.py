@@ -149,9 +149,9 @@ class module:
 
 
 class networkdiagnosis:
-    def __init__(self):
-        self.dialog = None
-        self.main_UI = None
+    def __init__(self, mainUI, maindialog):
+        self.dialog = maindialog
+        self.main_UI = mainUI
 
         self.dialogII = None
         self.interfaceUI = None
@@ -170,6 +170,7 @@ class networkdiagnosis:
         self.modulelist = []        #设备先后顺序有要求，所以用列表记录
         self.moduledict = {}        #在UI点击事件中，需要通过名字来找到对应的模块实例，所以用到字典记录
         self.addmodule()
+        self.networkdiagnosisstart()
 
 
     def addmodule(self):
@@ -239,10 +240,8 @@ class networkdiagnosis:
 
 
     # 循环检测各设备网络连接状况
-    def networkdiagnosisstart(self, mainUI, maindialog):
+    def networkdiagnosisstart(self):
         try:
-            self.dialog = maindialog
-            self.main_UI = mainUI
             self.detectnetworkthread = threading.Thread(target=self.detectallnetworkforever)
             self.detectnetworkthread.daemon = True
             self.detectnetworkthread.start()

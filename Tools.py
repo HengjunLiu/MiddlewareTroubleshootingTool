@@ -1,8 +1,11 @@
 import codecs
 import configparser
+import datetime
+from email import message
 import logging
 import os
 import subprocess
+import threading
 import xmlrpc.client
 from time import sleep
 from PyQt5.QtCore import Qt
@@ -13,21 +16,21 @@ from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog,
         QVBoxLayout, QWidget)
 import paramiko
 
-logging.basicConfig(level=logging.DEBUG,  
-                    format='%(asctime)s - %(levelname)s - %(message)s')  # 文件写入模式，“w”会覆盖之前的日志，“a”会追加到之前的日志 
 
 
 class ToolsUI(QDialog):
     def __init__(self):
         super(QDialog,self).__init__()
+        self.setWindowIcon(QtGui.QIcon(r'ico\blizzard.ico'))
         
         self.getConfig()
-        
         self.mainLayout = QVBoxLayout()   
-        self.setMinimumSize(500,300)
+        self.setMinimumSize(600,300)
         self.addWidget() 
         self.setLayout(self.mainLayout)
         self.setWindowTitle('辅助工具')
+        
+        # self.message = QtWidgets.QMessageBox()
     
     def getConfig(self):
         # 使用 codecs 打开文件，并指定编码  
@@ -49,14 +52,13 @@ class ToolsUI(QDialog):
     #创建通用GroupBox及项目控件    
     def createGroupBox(self, groupBoxTite, groupBoxName, List):
         self.GridGroupBox = QGroupBox(groupBoxTite)
-        # layout = QHBoxLayout()
         layout = QGridLayout()
 
         for i in range(len(List)):
             button = QPushButton(List[i])
             button.setObjectName(groupBoxName + '_' + List[i])
             layout.addWidget(button,i//5, i%5)
-            # setattr(self, 'pb'+List[i], button)
+            setattr(self, groupBoxName+List[i], button)
             button.clicked.connect(self.execute)
 
         self.GridGroupBox.setLayout(layout)
@@ -72,6 +74,10 @@ class ToolsUI(QDialog):
             self.createGroupBox('操作系统远程重启', 'OSReboot', self.OSList)
         if len(self.OtherList) > 0:
             self.createGroupBox('其它工具', 'other', self.OtherList)
+            
+        self.browser = QTextEdit()
+        self.browser.setReadOnly(True)
+        self.mainLayout.addWidget(self.browser)
     
     def execute(self):
         widgetName = self.sender().objectName()
@@ -86,18 +92,20 @@ class ToolsUI(QDialog):
     #远程桌面控制
     def remoteControl(self, name):
         remoteControlPath = self.config.get('RemoteControl', name + '.RemoteControlPath').strip()
+        VNCPath = self.config.get('RemoteControl', 'VNCPath').strip()
+        RDPPath = self.config.get('RemoteControl', 'RDPPath').strip()
         
         # 检查文件是否存在  
         if os.path.exists(remoteControlPath): 
             if remoteControlPath.split('.')[-1] == 'rdp':
                 # 使用mstsc.exe打开RDP文件  
                 # 注意：这里假设mstsc.exe在系统的PATH环境变量中，通常这是默认的  
-                subprocess.Popen(['mstsc.exe', remoteControlPath])
+                subprocess.Popen([RDPPath, remoteControlPath])
             elif remoteControlPath.split('.')[-1] == 'vnc':
-                subprocess.Popen(['vncviewer.exe', remoteControlPath])  
+                subprocess.Popen([VNCPath, remoteControlPath])  
                 # subprocess.Popen(['notepad.exe', remoteControlPath])
         else:  
-            print(f"文件 {remoteControlPath} 不存在。")
+            self.caution(f'文件 {remoteControlPath} 不存在!')
     
     #流水线Router程序重启
     def routerReboot(self, name):
@@ -106,23 +114,34 @@ class ToolsUI(QDialog):
         processName = self.config.get('RouterReboot', 'processName').strip()
         
         server_url = 'http://' + routerIp + ':18888'
+        
+        RouterThreading = threading.Thread(target=self.routerRebootThreading, args=(name, server_url, processName, batPath), daemon=True)
+        RouterThreading.start()
+        
+    # 流水线Router程序重启功能具体实现，并提供给线程调用       
+    def routerRebootThreading(self, name, server_url, processName, batPath):
         try:
+            button = getattr(self,'routerReboot' + name, None)
+            button.setDisabled(True)
             # 连接到XML-RPC服务器
             proxy = xmlrpc.client.ServerProxy(server_url)
             # 调用方法并获取结果
             result = proxy.rebootRouter(processName, batPath)
             if result:
-                logging.debug(f"{name} Router程序已重启")
-                print('Router程序已重启')
+                logging.debug(f"{name}主机Router程序已重启")
                 #添加弹框提示
+                self.caution(f"{name}主机Router程序已重启") 
             else:
-                logging.debug(f"{name} Router程序重启失败")
-                print('Router程序重启失败')
+                logging.debug(f"{name}主机Router程序重启失败")
                 #添加弹框提示
+                self.caution(f"{name}主机Router程序重启失败")
+            button.setEnabled(True)
         except Exception as e:
-            logging.warning("XML-RPC服务器连接异常" + str(e))
-            print('XML-RPC服务器连接异常')
+            button.setEnabled(True)
+            logging.warning(f"{name}主机XML-RPC服务连接异常" + str(e))
             #添加弹框提示
+            self.caution(f'{name}主机XML-RPC服务连接异常')
+        
 
     #操作系统远程重启
     def OSReboot(self, name):
@@ -135,6 +154,14 @@ class ToolsUI(QDialog):
             return
         
         OSIp = self.config.get('OSReboot', name + '.IP').strip()
+        
+        RebootThreading = threading.Thread(target=self.OSRebootThreading, args=(name, OSIp), daemon=True)
+        RebootThreading.start()
+        
+    #操作系统远程重启具体实现，并提供给线程调用           
+    def OSRebootThreading(self, name, OSIp):
+        button = getattr(self,'OSReboot' + name, None)
+        button.setDisabled(True)
         if name == 'DMS':
             try:
                 # 创建SSH客户端
@@ -146,9 +173,13 @@ class ToolsUI(QDialog):
                 netstat_info = stdout.read().decode()
                 # 关闭连接
                 client.close()
+                button.setEnabled(True)
+                self.caution(f'{name}系统重启中')
                 logging.debug(netstat_info)
             except:
-                logging.warning("get_linux_netstat_info()函数执行异常")     
+                button.setEnabled(True)
+                self.caution(f'执行{name}系统重启失败')
+                logging.warning("OSRebootThreading()函数执行异常")     
         else:
             server_url = 'http://' + OSIp + ':18888'
             try:
@@ -157,16 +188,28 @@ class ToolsUI(QDialog):
                 # 调用方法并获取结果
                 result = proxy.rebootOS()
                 if result:
-                    print('系统重启中')
+                    self.caution(f'{name}系统重启中')
                 else:
-                    print('系统重启失败')
+                    self.caution(f'执行{name}系统重启失败')
+                    print(f'执行{name}系统重启失败')
+                button.setEnabled(True)
             except:
-                print('XML-RPC服务器连接异常')
+                button.setEnabled(True)
+                self.caution(f'{name}主机XML-RPC服务连接异常')
+        
     
     #其它工具
     def other(self, name):
         print('other', name)
-             
+        
+    #信息反馈弹框
+    def caution(self, remider):
+        # 获取当前时间
+        currentTime = datetime.datetime.now()
+        # 格式化时间
+        formattedTime = currentTime.strftime("%Y-%m-%d %H:%M:%S")
+        self.browser.append(formattedTime + '  ' + remider +'\n')
+            
         
         
 if __name__ == '__main__':

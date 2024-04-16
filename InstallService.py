@@ -1,7 +1,7 @@
 import os
+import sys
 import win32serviceutil
 import win32service
-import sys
 import tkinter as tk
 from tkinter import messagebox
 

@@ -17,14 +17,12 @@ logging.basicConfig(level=logging.DEBUG,
 
 class main(base_dialog):
     def __init__(self):
-        self.ui = None
-        pass
+        self.interfacediagnosisUI = None
 
     def setupUi(self, dialog):
         super(main, self).setupUi(dialog)
         dialog.setWindowFlags(dialog.windowFlags() | QtCore.Qt.WindowMinimizeButtonHint)
-        self.networkdiag = networkdiagnosis()
-        self.networkdiag.networkdiagnosisstart(self, dialog)
+        self.networkdiag = networkdiagnosis(self, dialog)
 
         self.pbPortDiagnose.clicked.connect(self.openinterfacediagnosisUI)
         self.pbAuxiliaryTool.clicked.connect(self.openAuxiliaryTool)
@@ -37,10 +35,11 @@ class main(base_dialog):
 
     # 打开通讯接口监控界面
     def openinterfacediagnosisUI(self):
-        if not self.ui:
+        if not self.interfacediagnosisUI:
             self.dialogII = CustominterfaceDialog()
-            self.ui = interfacediagnosisUI(self.networkdiag)
-            self.ui.setupUi(self.dialogII)
+            self.dialogII.setWindowIcon(QtGui.QIcon(r'ico\destiny.ico'))
+            self.interfacediagnosisUI = interfacediagnosisUI(self.networkdiag)
+            self.interfacediagnosisUI.setupUi(self.dialogII)
             self.dialogII.show()
         else:
             self.dialogII.showNormal()
@@ -82,7 +81,7 @@ class main(base_dialog):
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def __init__(self, parent=None):
         self.parent = parent
-        icon = QtGui.QIcon('TrayIcon.ico')
+        icon = QtGui.QIcon(r'ico\TrayIcon.ico')
         QtWidgets.QSystemTrayIcon.__init__(self, icon, parent)
         self.menu = QtWidgets.QMenu(parent)
         self.exitAction = self.menu.addAction("Exit")
@@ -115,6 +114,7 @@ class CustomDialog(QtWidgets.QDialog):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     dialog = CustomDialog()
+    dialog.setWindowIcon(QtGui.QIcon(r'ico\obs.ico'))
     m = main()
     m.setupUi(dialog)
     dialog.show()
