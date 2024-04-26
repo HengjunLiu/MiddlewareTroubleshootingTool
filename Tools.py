@@ -2,7 +2,7 @@ import codecs
 import configparser
 import datetime
 from email import message
-import logging
+import networkdiagnosis
 import os
 import subprocess
 import threading
@@ -17,11 +17,13 @@ from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog,
 import paramiko
 
 
+logger = networkdiagnosis.logger
 
 class ToolsUI(QDialog):
     def __init__(self):
         super(QDialog,self).__init__()
         self.setWindowIcon(QtGui.QIcon(r'ico\blizzard.ico'))
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowMinimizeButtonHint)
         
         self.getConfig()
         self.mainLayout = QVBoxLayout()   
@@ -29,8 +31,6 @@ class ToolsUI(QDialog):
         self.addWidget() 
         self.setLayout(self.mainLayout)
         self.setWindowTitle('辅助工具')
-        
-        # self.message = QtWidgets.QMessageBox()
     
     def getConfig(self):
         # 使用 codecs 打开文件，并指定编码  
@@ -66,13 +66,13 @@ class ToolsUI(QDialog):
      
      #根据配置文件动态生成相关控件   
     def addWidget(self):
-        if len(self.RemoteControlList) > 0:
+        if self.RemoteControlList[0] != '':
             self.createGroupBox('远程桌面控制', 'remoteControl', self.RemoteControlList)
-        if len(self.RouterList) > 0:
+        if self.RouterList[0] != '':
             self.createGroupBox('流水线Router程序重启', 'routerReboot', self.RouterList)
-        if len(self.OSList) > 0:
+        if self.OSList[0] != '':
             self.createGroupBox('操作系统远程重启', 'OSReboot', self.OSList)
-        if len(self.OtherList) > 0:
+        if self.OtherList[0] != '':
             self.createGroupBox('其它工具', 'other', self.OtherList)
             
         self.browser = QTextEdit()
@@ -83,7 +83,6 @@ class ToolsUI(QDialog):
         widgetName = self.sender().objectName()
         groupBox = widgetName.split('_', 1)[0]
         pbname = widgetName.split('_', 1)[1]
-        print(groupBox)
         method = getattr(self, groupBox, None)
         method(pbname)
         
@@ -103,9 +102,8 @@ class ToolsUI(QDialog):
                 subprocess.Popen([RDPPath, remoteControlPath])
             elif remoteControlPath.split('.')[-1] == 'vnc':
                 subprocess.Popen([VNCPath, remoteControlPath])  
-                # subprocess.Popen(['notepad.exe', remoteControlPath])
         else:  
-            self.caution(f'文件 {remoteControlPath} 不存在!')
+            self.caution(f'{name}远程文件路径不存在，请检查配置!')
     
     #流水线Router程序重启
     def routerReboot(self, name):
@@ -128,19 +126,19 @@ class ToolsUI(QDialog):
             # 调用方法并获取结果
             result = proxy.rebootRouter(processName, batPath)
             if result:
-                logging.debug(f"{name}主机Router程序已重启")
-                #添加弹框提示
+                logger.info(f"{name}主机Router程序已重启")
+                #添加提示
                 self.caution(f"{name}主机Router程序已重启") 
             else:
-                logging.debug(f"{name}主机Router程序重启失败")
-                #添加弹框提示
+                logger.info(f"{name}主机Router程序重启失败")
+                #添加提示
                 self.caution(f"{name}主机Router程序重启失败")
             button.setEnabled(True)
         except Exception as e:
             button.setEnabled(True)
-            logging.warning(f"{name}主机XML-RPC服务连接异常" + str(e))
-            #添加弹框提示
-            self.caution(f'{name}主机XML-RPC服务连接异常')
+            logger.warning(f"{name}服务端连接异常" + str(e))
+            #添加提示
+            self.caution(f'{name}服务端连接异常')
         
 
     #操作系统远程重启
@@ -175,11 +173,11 @@ class ToolsUI(QDialog):
                 client.close()
                 button.setEnabled(True)
                 self.caution(f'{name}系统重启中')
-                logging.debug(netstat_info)
+                logger.info(netstat_info)
             except:
                 button.setEnabled(True)
                 self.caution(f'执行{name}系统重启失败')
-                logging.warning("OSRebootThreading()函数执行异常")     
+                logger.warning(f'执行{name}系统重启失败')     
         else:
             server_url = 'http://' + OSIp + ':18888'
             try:
@@ -189,13 +187,15 @@ class ToolsUI(QDialog):
                 result = proxy.rebootOS()
                 if result:
                     self.caution(f'{name}系统重启中')
+                    logger.info(f'{name}系统重启中')
                 else:
                     self.caution(f'执行{name}系统重启失败')
-                    print(f'执行{name}系统重启失败')
+                    logger.info(f'执行{name}系统重启失败')
                 button.setEnabled(True)
             except:
                 button.setEnabled(True)
-                self.caution(f'{name}主机XML-RPC服务连接异常')
+                self.caution(f'{name}主机服务连接异常')
+                logger.info(f'{name}主机服务连接异常')
         
     
     #其它工具

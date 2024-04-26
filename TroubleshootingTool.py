@@ -5,24 +5,27 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication
 
 from TroubleshootingToolUI import base_dialog
-from networkdiagnosis import networkdiagnosis
+import networkdiagnosis
 from interfacediagnosisUI import interfacediagnosisUI, CustominterfaceDialog
 import Tools
 
-logging.basicConfig(level=logging.DEBUG,  
-                    format='%(asctime)s - %(levelname)s - %(message)s',  
-                    filename='debug.log',  # 日志文件名，如果没有这个参数，日志输出到console  
-                    filemode='w')  # 文件写入模式，“w”会覆盖之前的日志，“a”会追加到之前的日志 
+# logging.basicConfig(level=logging.DEBUG,  
+#                     format='%(asctime)s - %(levelname)s - %(message)s',  
+#                     filename='debug.log',  # 日志文件名，如果没有这个参数，日志输出到console  
+#                     filemode='w')  # 文件写入模式，“w”会覆盖之前的日志，“a”会追加到之前的日志 
+
+logger = networkdiagnosis.logger
 
 
 class main(base_dialog):
     def __init__(self):
         self.interfacediagnosisUI = None
+        logger.info("TroubleshootingTool start")
 
     def setupUi(self, dialog):
         super(main, self).setupUi(dialog)
         dialog.setWindowFlags(dialog.windowFlags() | QtCore.Qt.WindowMinimizeButtonHint)
-        self.networkdiag = networkdiagnosis(self, dialog)
+        self.networkdiag = networkdiagnosis.networkdiagnosis(self, dialog)
 
         self.pbPortDiagnose.clicked.connect(self.openinterfacediagnosisUI)
         self.pbAuxiliaryTool.clicked.connect(self.openAuxiliaryTool)

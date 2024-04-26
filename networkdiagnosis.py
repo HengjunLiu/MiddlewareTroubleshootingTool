@@ -1,3 +1,4 @@
+import os
 import codecs
 import configparser
 import subprocess
@@ -6,11 +7,28 @@ import asyncio
 import time,datetime
 import xmlrpc.client
 import logging
+from logging.handlers import TimedRotatingFileHandler 
 
 import paramiko
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QMessageBox
 
+# 创建一个logger  
+logger = logging.getLogger('logger')  
+logger.setLevel(logging.DEBUG)  
+  
+if not os.path.exists('Log'):
+    os.makedirs('Log')
+# 创建一个handler，用于写入日志文件，每天生成一个新的日志文件  
+handler = TimedRotatingFileHandler('Log\log', when='D', interval=1, backupCount=7)  
+handler.setLevel(logging.DEBUG)  
+  
+# 定义一个handler的输出格式  
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')  
+handler.setFormatter(formatter)  
+  
+# 给logger添加handler  
+logger.addHandler(handler)
 
 class module:
     def __init__(self, dialog):
@@ -38,11 +56,11 @@ class module:
         # 在返回值中找规律(中英文系统返回值不一样)
         if 'ms TTL=' in output:
             # print(f"{self.ip} is reachable",str(datetime.datetime.now().time()))
-            logging.debug(f'{self.ip} is reachable')
+            logger.debug(f'{self.ip} is reachable')
             return True
         else:
             # print(f"{self.ip} is unreachable",str(datetime.datetime.now().time()))
-            logging.debug(f"{self.ip} is unreachable")
+            logger.debug(f"{self.ip} is unreachable")
             return False
 
 
@@ -70,7 +88,7 @@ class module:
             result = proxy.get_netstat_info()
         except Exception as e:
             # print(e)
-            logging.warning(f"getnetstatinfo()执行异常" + str(e))
+            logger.warning(f"getnetstatinfo()执行异常" + str(e))
             result = ''
         return result
 
@@ -85,15 +103,15 @@ class module:
             # 在返回值中找规律(中英文系统返回值不一样)
             if 'ms TTL=' in result:
                 # print(f"{ipaddress} is reachable",str(datetime.datetime.now().time()))
-                logging.debug(f"{ipaddress} is reachable")
+                logger.debug(f"{ipaddress} is reachable")
                 return True
             else:
                 # print(f"{ipaddress} is unreachable",str(datetime.datetime.now().time()))
-                logging.debug(f"{ipaddress} is unreachable")
+                logger.debug(f"{ipaddress} is unreachable")
                 return False
         except Exception as e:
             # print(e)
-            logging.warning("isipreachable()执行异常" + str(e))
+            logger.warning(f"{ipaddress}服务端异常" + str(e))
             return False
 
 
@@ -110,7 +128,7 @@ class module:
             client.close()
             return netstat_info
         except:
-            logging.warning("get_linux_netstat_info()函数执行异常")
+            logger.warning("get_linux_netstat_info()函数执行异常")
             return ''
         
     #检查设备中各端口连接状态
@@ -192,7 +210,7 @@ class networkdiagnosis:
                 self.modulelist.append(moduleobject)
                 self.moduledict[name] = moduleobject
         except:
-            logging.critical(f"addmodule()-->{name}模块添加异常")
+            logger.critical(f"addmodule()-->{name}模块添加异常")
 
 
 
@@ -202,12 +220,16 @@ class networkdiagnosis:
         if pushbutton:
             if status == True or status == 'ESTABLISHED':
                 pushbutton.setStyleSheet("QPushButton { background-color: #00FF00; }")   # 设置背景色为绿色
+                logger.info(f"{modulename}模块通讯正常")
             elif status == 'LISTENING':
                 pushbutton.setStyleSheet("QPushButton { background-color: #ffff00; }")  # 设置背景色为黄色
+                logger.info(f"{modulename}模块监听正常")
             elif status == 'DISCONNECTED':
                 pushbutton.setStyleSheet("QPushButton { background-color: #FF0000; }")  # 设置背景色为红色
+                logger.info(f"{modulename}模块通讯故障")
             else:
                 pushbutton.setStyleSheet("QPushButton { background-color: #FF0000; }")  # 设置背景色为红色
+                logger.info(f"{modulename}模块通讯故障")
                 UI.systemTrayIcon.showMessage("提示", modulename + "网络故障")
 
 
@@ -236,7 +258,7 @@ class networkdiagnosis:
                 time.sleep(3)
             except:
                 # print('detectallnetworkforever函数报错了！')
-                logging.error('detectallnetworkforever函数报错了！')
+                logger.error('detectallnetworkforever函数报错了！')
 
 
     # 循环检测各设备网络连接状况
@@ -246,7 +268,7 @@ class networkdiagnosis:
             self.detectnetworkthread.daemon = True
             self.detectnetworkthread.start()
         except:
-            logging.error("networkdiagnosisstart()运行异常，退出线程")
+            logger.error("networkdiagnosisstart()运行异常，退出线程")
     #--------------------------------------------------------------------------------
 
     def detectinterfaceall(self):
@@ -313,7 +335,7 @@ class networkdiagnosis:
                 time.sleep(5)
             except:
                 # print('detectinterfaceforever 函数报错了！')
-                logging.error('detectinterfaceforever 函数报错了！')
+                logger.error('detectinterfaceforever 函数报错了！')
 
     def interfacediagnosisstart(self, interfaceUI, dialogII):
         self.dialogII = dialogII
@@ -324,10 +346,9 @@ class networkdiagnosis:
             self.detectinterfacethread.start()
         except:
             # print('退出线程！')
-            logging.error("interfacediagnosisstart()运行异常，退出线程")
+            logger.error("interfacediagnosisstart()运行异常，退出线程")
 
 
 
-if __name__ == "__main__":
-    pass
+
 

@@ -1,6 +1,7 @@
 build/
 dist/
 venv/
+Log/
 __pycache__/
 .vscode
 *.log
